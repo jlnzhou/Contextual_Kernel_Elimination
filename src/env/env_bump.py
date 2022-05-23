@@ -8,9 +8,6 @@ default_contexts_dim = 5
 default_noise_scale = 0.1
 default_horizon = 1000
 
-# Anchors sampling parameters (for the star parameters)
-default_anchors_nb = 10
-
 
 class EnvBump:
 
