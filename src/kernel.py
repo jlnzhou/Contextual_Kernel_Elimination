@@ -4,7 +4,6 @@ import jax as jax
 import numpy as np
 config.update("jax_enable_x64", True)
 
-default_contexts_dim = 5
 default_gaussian_scale = 0.1
 default_exp_scale = 10
 
@@ -33,12 +32,10 @@ def gram(func, params, x, y):
 class Kernel:
 
     def __init__(self,
-                 settings,
-                 contexts_dim=default_contexts_dim):
+                 settings):
         """Initializes the class
         """
         self.settings = settings
-        self.contexts_dim = contexts_dim
 
     def gram_matrix(self, states):
         return self._pairwise(states, states)
