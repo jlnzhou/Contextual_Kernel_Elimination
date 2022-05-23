@@ -8,6 +8,25 @@ pip install -r requirements.txt
 
 [toc]
 
+## Running a single experiment
+
+```shell
+python run.py 
+```
+
+
+
+#### Arguments
+
+- --algo: Algorithm
+- --kernel: Kernel
+- --lbd: Regularization parameter $\lambda$
+- --max_horizon: Maximum horizon
+- --env: Environment
+- --mu: Projection parameter $\mu$
+- -- rd_seeds: Random seeds
+- --exp_name: Name of the experiment
+
 ## Agents
 
 
