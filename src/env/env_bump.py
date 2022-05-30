@@ -1,24 +1,17 @@
 import numpy as np
 
-# Parameters of the environment
-default_actions = np.arange(0, 1, 0.01)
-default_contexts = np.arange(0, 1, 0.01)
-default_actions_dim = 1
-default_contexts_dim = 5
-default_noise_scale = 0.1
-default_horizon = 1000
-
 
 class EnvBump:
 
     def __init__(self,
                  rd_seed,
-                 actions=default_actions,
-                 contexts=default_contexts,
-                 actions_dim=default_actions_dim,
-                 contexts_dim=default_contexts_dim,
-                 noise_scale=default_noise_scale,
-                 horizon=default_horizon):
+                 horizon,
+                 actions,
+                 contexts,
+                 actions_dim,
+                 contexts_dim,
+                 noise_scale):
+        self.random_seed = rd_seed
         # Horizon
         self.horizon = horizon
         # Contexts/Actions parameters
