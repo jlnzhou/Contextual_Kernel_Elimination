@@ -1,3 +1,5 @@
+import itertools
+
 import jax.scipy as jsp
 import jax.numpy as jnp
 from jax.config import config
@@ -9,6 +11,7 @@ config.update("jax_enable_x64", True)
 
 default_beta = 0.1
 
+
 class KernelUCB:
 
     def __init__(self,
@@ -19,80 +22,73 @@ class KernelUCB:
         Initializes the class
         """
         self.settings = settings
-        self.rng = np.random.RandomState(self.settings['random_seed'])
+        self.agent_rng = np.random.RandomState(self.settings['random_seed'])
         self.reg_lambda = settings['reg_lambda']
         self.kernel = kernel
+        # Actions
+        self.actions = np.linspace(settings['min_action'], settings["max_action"], settings["n_actions"])
+        self.actions_dim = settings['dim_actions']
+        self.actions_grid = [a for a in itertools.product(self.actions, repeat = self.actions_dim)]
+        # Contexts
+        self.contexts = np.linspace(settings['min_context'], settings["max_context"], settings["n_contexts"])
+        self.contexts_dim = settings['dim_contexts']
         # Other attributes
-        self.past_states = jnp.array([])
-        self.rewards = jnp.array([])
+        self.past_states = jnp.array([]).reshape(0, self.contexts_dim+self.actions_dim)
+        self.rewards = jnp.array([]).reshape(0)
         self.matrix_kt = None
         self.matrix_kt_inverse = None
         self.beta_t = beta_t
 
-    def get_story_data(self):
-        return self.past_states, self.rewards
+    # Sampling
+    def get_upper_confidence_bound(self, state):
+        k_past_present = self.kernel.evaluate(self.past_states, state)
+        mean = jnp.dot(k_past_present.T, jnp.dot(self.matrix_kt_inverse, self.rewards))
+        k_present_present = self.kernel.evaluate(state, state)
+        std2 = (1 / self.reg_lambda) * (k_present_present - jnp.dot(k_past_present.T,
+                                                                    jnp.dot(self.matrix_kt_inverse,
+                                                                            k_past_present)))
+        ucb = mean + self.beta_t * jnp.sqrt(std2)
+        return jnp.squeeze(ucb)
+
+    def get_batch_ucb(self, context):
+        return
+
+    def discrete_inference(self, context):
+        if self.past_states.size == 0:
+            return self.agent_rng.choice(a=self.actions,
+                                         size=self.actions_dim)
+        else:
+            states_grid = [self.get_state(context, jnp.array(a)) for a in self.actions_grid]
+            ucb_all_actions = jnp.array([self.get_upper_confidence_bound(s) for s in states_grid])
+            idx = jnp.argmax(ucb_all_actions)
+            return jnp.array(self.actions_grid[idx])
+
+    def sample_action(self, context):
+        return self.discrete_inference(context)
+
+    @staticmethod
+    def get_state(context, action):
+        context, action = context.reshape((1, -1)), action.reshape((1, -1))
+        return jnp.concatenate([context, action], axis=1)
+
+    # Updating agent
+    def update_data_pool(self, context, action, reward):
+        state = self.get_state(context, action)
+        self.past_states = jnp.concatenate([self.past_states, state])
+        self.rewards = jnp.concatenate([self.rewards, reward])
 
     def set_gram_matrix(self):
         self.matrix_kt = self.kernel.gram_matrix(self.past_states)
         self.matrix_kt += self.reg_lambda * jnp.eye(self.matrix_kt.shape[0])
         self.matrix_kt_inverse = jnp.linalg.inv(self.matrix_kt)
 
-    def get_upper_confidence_bound(self, state, K_matrix_inverse, S, rewards):
-        K_S_s = self.kernel.evaluate(S, state)
-        mean = jnp.dot(K_S_s.T, jnp.dot(K_matrix_inverse, rewards))
-        K_ss = self.kernel.evaluate(state, state)
-        std = (1 / self.reg_lambda) * (K_ss - jnp.dot(K_S_s.T, jnp.dot(K_matrix_inverse, K_S_s)))
-        ucb = mean + self.beta_t * jnp.sqrt(std)
-        return jnp.squeeze(ucb)
-
-    @timecall(immediate=False)
-    def sample_action(self, context):
-        self.set_beta()
-        S, rewards = self.get_story_data()
-        args = self.K_matrix_inverse, S, rewards
-        return self.continuous_inference(context, args)
-
-    def dictionary_size(self):
-        return 0
-
-    def continuous_inference(self, context, args):
-        nb_gradient_steps = 0
-
-        if nb_gradient_steps == 0:
-            return self.discrete_inference(context, args)
-        else:
-            def func(action):
-                state = self.get_state(context, action)
-                return self.get_upper_confidence_bound(state, *args)
-
-            a0 = self.discrete_inference(context, args)
-            max_hessian_eigenvalue = jnp.max(jsp.linalg.eigh(hessian(func)(a0), eigvals_only=True))
-            step_size = jnp.nan_to_num(1 / max_hessian_eigenvalue)
-            a_t = a0
-            for _ in range(nb_gradient_steps):
-                gradient = jnp.nan_to_num(grad(func)(a_t))
-                a_t -= step_size * gradient
-            return a_t
-
-    def get_state(self, context, action):
-        context, action = context.reshape((1, -1)), action.reshape((1, -1))
-        return jnp.concatenate([context, action], axis=1)
-
-    def get_batch_ucb(self, context, grid, args):
-        return jnp.array([self.get_upper_confidence_bound(self.get_state(context, a), *args) for a in grid])
-
-    def discrete_inference(self, context, args):
-        grid = self.action_anchors
-        ucb_all_actions = self.get_batch_ucb(context, grid, args)
-        idx = jnp.argmax(ucb_all_actions)
-        grid = jnp.array(grid)
-        return jnp.array([grid[idx]])
-
     def update_agent(self, context, action, reward):
         self.update_data_pool(context, action, reward)
         self.set_gram_matrix()
 
-    def update_data_pool(self, context, action, reward):
-        state = self.get_state(context, action)
-        self.past_states = jnp.concatenate([self.past_states, state])
-        self.rewards = jnp.concatenate([self.rewards, jnp.array([reward])])
+
+
+
+
+
+
