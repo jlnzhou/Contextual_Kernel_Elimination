@@ -51,11 +51,13 @@ class Gaussian(Kernel):
 
     def __init__(self,
                  *args,
-                 gaussian_scale=default_gaussian_scale):
+                 gaussian_scale):
         """Initializes the class
         """
         super(Gaussian, self).__init__(*args)
         self.gaussian_scale = gaussian_scale
+        if self.gaussian_scale is None:
+            self.gaussian_scale=default_gaussian_scale
 
     def _pairwise(self, state1, state2):
         """
@@ -70,13 +72,15 @@ class Exponential(Kernel):
 
     def __init__(self,
                  *args,
-                 exp_scale=default_exp_scale):
+                 exp_scale):
         """Initializes the class
         """
         super(Exponential, self).__init__(*args)
         """Initializes the class
         """
         self.exp_scale = exp_scale
+        if self.exp_scale is None:
+            self.exp_scale = default_exp_scale
 
     def _pairwise(self, state1, state2):
         """
