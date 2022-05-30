@@ -9,15 +9,6 @@ config.update("jax_enable_x64", True)
 
 default_beta = 0.1
 
-
-def instantiate_data_pool():
-    return {
-        'contexts': [],
-        'actions': [],
-        'rewards': []
-    }
-
-
 class KernelUCB:
 
     def __init__(self,
@@ -32,8 +23,8 @@ class KernelUCB:
         self.reg_lambda = settings['reg_lambda']
         self.kernel = kernel
         # Other attributes
-        self.past_states = None
-        self.rewards = None
+        self.past_states = jnp.array([])
+        self.rewards = jnp.array([])
         self.matrix_kt = None
         self.matrix_kt_inverse = None
         self.beta_t = beta_t
@@ -53,17 +44,6 @@ class KernelUCB:
         std = (1 / self.reg_lambda) * (K_ss - jnp.dot(K_S_s.T, jnp.dot(K_matrix_inverse, K_S_s)))
         ucb = mean + self.beta_t * jnp.sqrt(std)
         return jnp.squeeze(ucb)
-
-    def instantiate(self, env):
-        self.action_anchors = env.get_anchor_points()
-        context, label = env.sample_data()
-        idx = self.rng.choice(self.action_anchors.shape[0])
-        action = np.array([self.action_anchors[idx]])
-        state = self.get_state(context, action)
-        reward = env.sample_reward_noisy(state, label)[0]
-        self.past_states = jnp.array(self.get_state(context, action))
-        self.rewards = jnp.array([reward])
-        self.set_gram_matrix()
 
     @timecall(immediate=False)
     def sample_action(self, context):
