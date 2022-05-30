@@ -17,20 +17,33 @@ base_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(base_dir)
 
 
-def save_result(settings, horizon, average_reward, regret, total_time):
+def save_result(settings, metrics):
     task_name = 'algo:{}'.format(settings['agent'])
+    task_name += '|{}:{}'.format('kernel', settings['kernel'])
+    task_name += '|{}:{}'.format('kernel_param', settings['kernel_param'])
+    task_name += '|{}:{}'.format('reg_lambda', settings['reg_lambda'])
     task_name += '|{}:{}'.format('mu', settings['mu'])
-    task_name += '|{}:{}'.format('lambda', settings['reg_lambda'])
-    task_name += '|{}:{}'.format('C', settings['C'])
-    task_name += '|{}:{}'.format('beta', settings['beta'])
-    task_name += '|{}:{}'.format('rd_seed', settings['random_seed'])
-    task_name += '|{}:{}'.format('kernel', settings['kernel']),
-    task_name += '|{}:{}'.format('env', settings['env']),
-    task_name += '|{}:{}'.format('horizon', horizon)
+    task_name += '|{}:{}'.format('env', settings['env'])
+    task_name += '|{}:{}'.format('T', settings['T'])
+    task_name += '|{}:{}'.format('min_action', settings['min_action'])
+    task_name += '|{}:{}'.format('max_action', settings['max_action'])
+    task_name += '|{}:{}'.format('n_actions', settings['n_actions'])
+    task_name += '|{}:{}'.format('dim_actions', settings['dim_actions'])
+    task_name += '|{}:{}'.format('min_context', settings['min_context'])
+    task_name += '|{}:{}'.format('max_context', settings['max_context'])
+    task_name += '|{}:{}'.format('n_contexts', settings['n_contexts'])
+    task_name += '|{}:{}'.format('dim_contexts', settings['dim_contexts'])
+    task_name += '|{}:{}'.format('noise_scale', settings['noise_scale'])
+    task_name += '|{}:{}'.format('exp_name', settings['exm_name'])
+    task_name += '|{}:{}'.format('random_seed', settings['random_seed'])
 
-    metrics_information = 'average_reward:{}'.format(average_reward)
-    metrics_information += '|regret:{}'.format(regret)
-    metrics_information += '|total_time:{}'.format(total_time)
+    metrics_information = 'step:{}'.format(metrics['step'])
+    metrics_information += '|time:{}'.format(metrics['time'])
+    metrics_information += '|average_reward:{}'.format(metrics['average_reward'])
+    metrics_information += '|average_best:{}'.format(metrics['average_best'])
+    metrics_information += '|sum_reward:{}'.format(metrics['sum_reward'])
+    metrics_information += '|sum_best:{}'.format(metrics['sum_best'])
+    metrics_information += '|regret:{}'.format(metrics['regret'])
 
     result = '{} {}\n'.format(task_name, metrics_information)
     results_dir = 'results/{}/{}/{}'.format(settings['env'], settings['exp_name'], today.strftime("%d-%m-%Y"))
@@ -49,47 +62,50 @@ def do_single_experiment(parameters):
     env = get_env_by_name(parameters)
     kernel = get_kernel_by_name(parameters)
     agent = get_agent_by_name(parameters)(parameters, kernel)
-    metrics = {'time': [],
+    metrics = {'step' : [],
+               'time': [],
                'average_reward': [],
+               'average_best' : [],
+               'sum_reward' : [],
+               'sum_best': [],
                'regret': []
                }
     best_strategy_rewards = []
 
     # t0
     t0 = time.time()
-    for step in tqdm(range(parameters['T'])):
-        pass
 
-    #
-    #
-    # t0 = time.time()
-    #
-    # for step in tqdm(range(parameters['T'] + 1)):
-    #
-    #     # choose a random context.
-    #     context, label = env.sample_data()
-    #     # iterate learning algorithm for 1 round.
-    #     action = agent.sample_action(context)
-    #     state = agent.get_state(context, action)
-    #     reward = env.sample_reward_noisy(state, label)[0]
-    #     agent.update_agent(context, action, reward)
-    #     # get best_strategy's reward for the current context.
-    #     best_strategy_rewards.append(env.get_best_reward_in_context(context, label))
-    #
-    #     if step % 100 == 0 and step != 0:
-    #         t = time.time() - t0
-    #         metrics['time'].append(t)
-    #         average_reward = np.mean(agent.rewards[1:])
-    #         metrics['average_reward'].append(average_reward)
-    #         sum_best = np.sum(np.array(best_strategy_rewards))
-    #         sum_agent = np.sum(np.array(agent.rewards[1:]))
-    #         regret = sum_best - sum_agent
-    #         save_result(parameters, step, average_reward, regret, t)
-    #         print('Average reward: {}'.format(average_reward))
-    #         print('Regret: {}'.format(regret))
-    #         print('Dictionary size: {}'.format(agent.dictionary_size()))
-    #
-    # return metrics
+    # Iterations
+    for step in tqdm(range(parameters['T'])):
+        # Choose a random context
+        context = env.sample_data()
+        # Iteration of the agent
+        action = agent.sample_action(context)
+        state = agent.get_state(context, action)
+        reward = env.sample_reward_noisy(state)
+        agent.update_agent(context, action, reward)
+        # Best reward possible
+        best_strategy_rewards.append(env.get_best_reward_in_context(context).squeeze())
+
+        # Metrics
+        if step % 100 == 0 and step != 0:
+            metrics['step'] = step
+            t = time.time() - t0
+            metrics['time'].append(t)
+            average_reward = np.mean(agent.rewards)
+            metrics['average_reward'].append(average_reward)
+            average_best = np.mean(best_strategy_rewards)
+            metrics['average_best'].append(average_best)
+            sum_best = np.sum(best_strategy_rewards)
+            metrics['sum_best'].append(sum_best)
+            sum_agent = np.sum(agent.rewards)
+            metrics['sum_reward'].append(sum_agent)
+            regret = sum_best - sum_agent
+            metrics['regret'].append(regret)
+            save_result(parameters, metrics)
+            print('Stem: {}'.format(step))
+            print('Average reward: {}'.format(average_reward))
+            print('Regret: {}'.format(regret))
 
 
 def experiment(args):
@@ -135,11 +151,11 @@ if __name__ == "__main__":
     parser.add_argument('--max_horizon', nargs="?", type=int, default=1000, help='Maximum horizon')
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=float, default=101)
+    parser.add_argument('--n_actions', nargs="?", type=float, default=11)
     parser.add_argument('--dim_actions', nargs="?", type=int, default=2)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=float, default=101)
+    parser.add_argument('--n_contexts', nargs="?", type=float, default=11)
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
     parser.add_argument('--noise_scale', nargs="?", type=float, default=0.1)
     # Experiment parameters
