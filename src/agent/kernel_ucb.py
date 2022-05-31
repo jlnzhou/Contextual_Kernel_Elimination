@@ -1,94 +1,82 @@
-import itertools
-
-import jax.scipy as jsp
+from numpy import random
 import jax.numpy as jnp
 from jax.config import config
-from jax import grad, hessian
-import numpy as np
-from profilehooks import timecall
 
 config.update("jax_enable_x64", True)
 
-default_beta = 0.1
 
-
-class KernelUCB:
+class KernelUCBDiscrete:
 
     def __init__(self,
                  settings,
-                 kernel,
-                 beta_t=default_beta):
+                 kernel):
         """
         Initializes the class
         """
         self.settings = settings
-        self.agent_rng = np.random.RandomState(self.settings['random_seed_agent'])
         self.reg_lambda = settings['reg_lambda']
+        self.explo = settings["explo"]
         self.kernel = kernel
+        self.agent_rng = random.RandomState(self.settings['random_seed_agent'])
         # Actions
-        self.actions = np.linspace(settings['min_action'], settings["max_action"], settings["n_actions"])
+        self.actions = settings['actions']
         self.actions_dim = settings['dim_actions']
-        self.actions_grid = [[self.actions[i] for i in a] for a in itertools.product(range(len(self.actions)), repeat=self.actions_dim)]
+        self.actions_grid = settings['actions_grid']
         # Contexts
-        self.contexts = np.linspace(settings['min_context'], settings["max_context"], settings["n_contexts"])
+        self.contexts = settings['contexts']
         self.contexts_dim = settings['dim_contexts']
         # Other attributes
         self.past_states = jnp.array([]).reshape(0, self.contexts_dim+self.actions_dim)
+        self.rewards_clean = jnp.array([]).reshape(0)
         self.rewards = jnp.array([]).reshape(0)
         self.matrix_kt = None
         self.matrix_kt_inverse = None
-        self.beta_t = beta_t
 
     # Sampling
     def get_upper_confidence_bound(self, state):
         k_past_present = self.kernel.evaluate(self.past_states, state)
         mean = jnp.dot(k_past_present.T, jnp.dot(self.matrix_kt_inverse, self.rewards))
         k_present_present = self.kernel.evaluate(state, state)
-        std2 = (1 / self.reg_lambda) * (k_present_present - jnp.dot(k_past_present.T,
-                                                                    jnp.dot(self.matrix_kt_inverse,
-                                                                            k_past_present)))
-        ucb = mean + self.beta_t * jnp.sqrt(std2)
+        std2 = k_present_present - jnp.dot(k_past_present.T, jnp.dot(self.matrix_kt_inverse,
+                                                                     k_past_present))
+        ucb = mean + self.explo/jnp.sqrt(self.reg_lambda) * jnp.sqrt(std2)
         return jnp.squeeze(ucb)
 
-    def get_batch_ucb(self, context):
-        return
-
-    def discrete_inference(self, context):
+    def discrete_inference(self, states_grid):
         if self.past_states.size == 0:
             return self.agent_rng.choice(a=self.actions,
                                          size=self.actions_dim)
         else:
-            states_grid = [self.get_state(context, jnp.array(a)) for a in self.actions_grid]
             ucb_all_actions = jnp.array([self.get_upper_confidence_bound(s) for s in states_grid])
             idx = jnp.argmax(ucb_all_actions)
-            return jnp.array(self.actions_grid[idx])
+            state = states_grid[idx]
+            context, action = state[:, :self.contexts_dim], state[:, self.contexts_dim:]
+            return action
 
     def sample_action(self, context):
         return self.discrete_inference(context)
 
-    @staticmethod
-    def get_state(context, action):
-        context, action = context.reshape((1, -1)), action.reshape((1, -1))
-        return jnp.concatenate([context, action], axis=1)
-
     # Updating agent
-    def update_data_pool(self, context, action, reward):
-        state = self.get_state(context, action)
+    def update_data_pool(self, state, reward_clean, reward):
         self.past_states = jnp.concatenate([self.past_states, state])
+        self.rewards_clean = jnp.concatenate([self.rewards_clean, reward_clean])
         self.rewards = jnp.concatenate([self.rewards, reward])
 
-    def set_gram_matrix(self):
-        self.matrix_kt = self.kernel.gram_matrix(self.past_states)
-        self.matrix_kt += self.reg_lambda * jnp.eye(self.matrix_kt.shape[0])
-        self.matrix_kt_inverse = jnp.linalg.inv(self.matrix_kt)
-
-    def update_agent(self, context, action, reward):
-        self.update_data_pool(context, action, reward)
-        self.set_gram_matrix()
-
-
-
-
-
-
-
+    def update_agent(self, state, reward_clean, reward):
+        self.update_data_pool(state, reward_clean, reward)
+        k_present_present = self.kernel.evaluate(state, state)
+        if self.past_states.size == self.actions_dim+self.contexts_dim:
+            self.matrix_kt_inverse = 1/k_present_present + self.reg_lambda
+        else:
+            # Update inverse gram matrix online
+            k_past_present = self.kernel.evaluate(self.past_states, state)[:-1]
+            k22 = k_present_present + self.reg_lambda - jnp.dot(k_past_present.T,
+                                                                jnp.dot(self.matrix_kt_inverse, k_past_present))
+            k22 = 1/k22
+            k11 = jnp.dot(self.matrix_kt_inverse, k_past_present)
+            k11 = jnp.dot(k11, k11.T)
+            k11 = self.matrix_kt_inverse + k22*k11
+            k12 = -k22*jnp.dot(self.matrix_kt_inverse, k_past_present)
+            k21 = -k22*jnp.dot(k_past_present.T, self.matrix_kt_inverse)
+            self.matrix_kt_inverse = jnp.block([[k11, k12],
+                                                [k21, k22]])

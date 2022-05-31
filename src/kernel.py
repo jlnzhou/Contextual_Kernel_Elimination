@@ -1,32 +1,38 @@
+import os
+import sys
 import jax.numpy as jnp
 from jax.config import config
-import jax as jax
-import numpy as np
+from jax import jit, vmap
+
+
 config.update("jax_enable_x64", True)
+
+base_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(base_dir)
 
 default_gaussian_scale = 0.1
 default_exp_scale = 10
 
 
-@jax.jit
+@jit
 def sq_euclidean_distance(x, y):
     return jnp.sum((x - y) ** 2)
 
 
 # RBF Kernel
-@jax.jit
+@jit
 def rbf_kernel(gamma, x, y):
     return jnp.exp(- gamma * sq_euclidean_distance(x, y))
 
 
 # Exponential Kernel
-@jax.jit
+@jit
 def exp_kernel(gamma, x, y):
     return jnp.exp(- gamma * jnp.sqrt(sq_euclidean_distance(x, y)))
 
 
 def gram(func, params, x, y):
-    return jax.vmap(lambda x1: jax.vmap(lambda y1: func(params, x1, y1))(y))(x)
+    return vmap(lambda x1: vmap(lambda y1: func(params, x1, y1))(y))(x)
 
 
 class Kernel:
@@ -50,14 +56,13 @@ class Kernel:
 class Gaussian(Kernel):
 
     def __init__(self,
-                 *args,
-                 gaussian_scale):
+                 parameters):
         """Initializes the class
         """
-        super(Gaussian, self).__init__(*args)
-        self.gaussian_scale = gaussian_scale
+        super(Gaussian, self).__init__(parameters)
+        self.gaussian_scale = parameters['kernel_param']
         if self.gaussian_scale is None:
-            self.gaussian_scale=default_gaussian_scale
+            self.gaussian_scale = default_gaussian_scale
 
     def _pairwise(self, state1, state2):
         """
@@ -71,14 +76,13 @@ class Gaussian(Kernel):
 class Exponential(Kernel):
 
     def __init__(self,
-                 *args,
-                 exp_scale):
+                 parameters):
         """Initializes the class
         """
-        super(Exponential, self).__init__(*args)
+        super(Exponential, self).__init__(parameters)
         """Initializes the class
         """
-        self.exp_scale = exp_scale
+        self.exp_scale = parameters['kernel_param']
         if self.exp_scale is None:
             self.exp_scale = default_exp_scale
 

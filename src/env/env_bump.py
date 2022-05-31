@@ -1,28 +1,21 @@
-import numpy as np
+import os
+import sys
 import jax.numpy as jnp
+from jax.config import config
 
-class EnvBump:
+from src.env.env import Env
+
+config.update("jax_enable_x64", True)
+
+base_dir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(base_dir)
+
+
+class EnvBumpDiscrete(Env):
 
     def __init__(self,
-                 rd_seed,
-                 horizon,
-                 actions,
-                 contexts,
-                 actions_dim,
-                 contexts_dim,
-                 noise_scale):
-        self.random_seed = rd_seed
-        # Horizon
-        self.horizon = horizon
-        # Contexts/Actions parameters
-        self.actions = actions
-        self.contexts = contexts
-        self.context_numbers = contexts.size
-        self.actions_dim = actions_dim
-        self.contexts_dim = contexts_dim
-        # RNG parameters
-        self.env_rng = np.random.RandomState(rd_seed)  # np.random.RandomState(123)
-        self.noise_scale = noise_scale
+                 parameters):
+        super(EnvBumpDiscrete, self).__init__(parameters)
         # Star Parameters
         self.a_star = self.env_rng.choice(a=self.actions,
                                           size=self.actions_dim)
@@ -41,8 +34,8 @@ class EnvBump:
         r = max(0, 1 - term)
         return jnp.array([r])
 
-    def sample_reward_noisy(self, state):
-        return self.sample_reward(state) + self.env_rng.normal(loc=0.0, scale=self.noise_scale)
+    def sample_reward_noisy(self, reward):
+        return reward + self.env_rng.normal(loc=0.0, scale=self.noise_scale)
 
     def get_best_reward_in_context(self, context):
         term = jnp.dot(context - self.x_star, self.w_star).squeeze()
