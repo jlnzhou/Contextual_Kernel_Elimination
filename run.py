@@ -34,7 +34,7 @@ def save_result(settings, metrics):
     task_name += '|{}:{}'.format('n_contexts', settings['n_contexts'])
     task_name += '|{}:{}'.format('dim_contexts', settings['dim_contexts'])
     task_name += '|{}:{}'.format('noise_scale', settings['noise_scale'])
-    task_name += '|{}:{}'.format('exp_name', settings['exm_name'])
+    task_name += '|{}:{}'.format('exp_name', settings['exp_name'])
     task_name += '|{}:{}'.format('random_seed', settings['random_seed'])
 
     metrics_information = 'step:{}'.format(metrics['step'])
@@ -103,7 +103,7 @@ def do_single_experiment(parameters):
             regret = sum_best - sum_agent
             metrics['regret'].append(regret)
             save_result(parameters, metrics)
-            print('Stem: {}'.format(step))
+            print('Step: {}'.format(step))
             print('Average reward: {}'.format(average_reward))
             print('Regret: {}'.format(regret))
 
@@ -159,6 +159,6 @@ if __name__ == "__main__":
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
     parser.add_argument('--noise_scale', nargs="?", type=float, default=0.1)
     # Experiment parameters
-    parser.add_argument('--rd_seeds', nargs="+", type=float, default=[1, 2, 3], help='Random seed')
+    parser.add_argument('--rd_seeds', nargs="+", type=float, default=[2], help='Random seed')
     parser.add_argument('--exp_name', nargs="?", type=str, default='exp', help='Name of the experiment')
     experiment(parser.parse_args())
