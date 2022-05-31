@@ -35,7 +35,8 @@ def save_result(settings, metrics):
     task_name += '|{}:{}'.format('dim_contexts', settings['dim_contexts'])
     task_name += '|{}:{}'.format('noise_scale', settings['noise_scale'])
     task_name += '|{}:{}'.format('exp_name', settings['exp_name'])
-    task_name += '|{}:{}'.format('random_seed', settings['random_seed'])
+    task_name += '|{}:{}'.format('random_seed_agent', settings['random_seed_agent'])
+    task_name += '|{}:{}'.format('random_seed_env', settings['random_seed_env'])
 
     metrics_information = 'step:{}'.format(metrics['step'])
     metrics_information += '|time:{}'.format(metrics['time'])
@@ -62,11 +63,11 @@ def do_single_experiment(parameters):
     env = get_env_by_name(parameters)
     kernel = get_kernel_by_name(parameters)
     agent = get_agent_by_name(parameters)(parameters, kernel)
-    metrics = {'step' : [],
+    metrics = {'step': [],
                'time': [],
                'average_reward': [],
-               'average_best' : [],
-               'sum_reward' : [],
+               'average_best': [],
+               'sum_reward': [],
                'sum_best': [],
                'regret': []
                }
@@ -132,9 +133,11 @@ def experiment(args):
         'exp_name': args.exp_name
     }
     print(parameters)
-    for rd in args.rd_seeds:
-        parameters['random_seed'] = rd
-        print("Random seed: {}".format(rd))
+    for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env):
+        parameters['random_seed_agent'] = rd_agent
+        parameters['random_seed_env'] = rd_env
+        print("Random seed Agent: {}".format(rd_agent))
+        print("Random seed Env: {}".format(rd_env))
         do_single_experiment(parameters)
 
 
@@ -151,14 +154,15 @@ if __name__ == "__main__":
     parser.add_argument('--max_horizon', nargs="?", type=int, default=1000, help='Maximum horizon')
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=float, default=11)
+    parser.add_argument('--n_actions', nargs="?", type=float, default=101)
     parser.add_argument('--dim_actions', nargs="?", type=int, default=2)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=float, default=11)
+    parser.add_argument('--n_contexts', nargs="?", type=float, default=101)
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
     parser.add_argument('--noise_scale', nargs="?", type=float, default=0.1)
     # Experiment parameters
-    parser.add_argument('--rd_seeds', nargs="+", type=float, default=[2], help='Random seed')
+    parser.add_argument('--rd_seeds_agent', nargs="+", type=float, default=[1, 2, 3], help='Random seeds Agent')
+    parser.add_argument('--rd_seeds_env', nargs="+", type=float, default=[4, 5, 6], help='Random seed Env')
     parser.add_argument('--exp_name', nargs="?", type=str, default='exp', help='Name of the experiment')
     experiment(parser.parse_args())

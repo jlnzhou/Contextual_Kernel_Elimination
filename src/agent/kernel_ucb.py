@@ -22,13 +22,13 @@ class KernelUCB:
         Initializes the class
         """
         self.settings = settings
-        self.agent_rng = np.random.RandomState(self.settings['random_seed'])
+        self.agent_rng = np.random.RandomState(self.settings['random_seed_agent'])
         self.reg_lambda = settings['reg_lambda']
         self.kernel = kernel
         # Actions
         self.actions = np.linspace(settings['min_action'], settings["max_action"], settings["n_actions"])
         self.actions_dim = settings['dim_actions']
-        self.actions_grid = [a for a in itertools.product(self.actions, repeat = self.actions_dim)]
+        self.actions_grid = [[self.actions[i] for i in a] for a in itertools.product(range(len(self.actions)), repeat=self.actions_dim)]
         # Contexts
         self.contexts = np.linspace(settings['min_context'], settings["max_context"], settings["n_contexts"])
         self.contexts_dim = settings['dim_contexts']

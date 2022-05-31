@@ -24,7 +24,7 @@ def get_agent_by_name(parameters):
 
 def get_env_by_name(parameters):
     if parameters['env'] == 'bump':
-        return EnvBump(rd_seed=parameters['random_seed'],
+        return EnvBump(rd_seed=parameters['random_seed_env'],
                        horizon=parameters['T'],
                        actions=np.linspace(parameters['min_action'], parameters["max_action"], parameters["n_actions"]),
                        contexts=np.linspace(parameters['min_context'], parameters["max_context"], parameters["n_contexts"]),

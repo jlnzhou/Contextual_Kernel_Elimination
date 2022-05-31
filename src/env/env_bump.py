@@ -17,7 +17,6 @@ class EnvBump:
         # Contexts/Actions parameters
         self.actions = actions
         self.contexts = contexts
-        self.input_mesh = np.array(np.meshgrid(actions, contexts))
         self.context_numbers = contexts.size
         self.actions_dim = actions_dim
         self.contexts_dim = contexts_dim
