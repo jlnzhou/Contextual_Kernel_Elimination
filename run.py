@@ -32,15 +32,16 @@ def save_result(settings, metrics):
         os.makedirs(results_dir)
     file_name = os.path.join(results_dir, 'metrics.json')
 
+    merged_dict = {**settings, **metrics}
     if os.path.exists(file_name) and os.path.getsize(file_name) > 0:
         with open(file_name, 'r') as file:
             current_info = json.load(file)
-            current_info["results"].append(settings | metrics)
+            current_info["results"].append(merged_dict)
         with open(file_name, 'w') as file:
             json.dump(current_info, file)
     else:
         with open(file_name, 'w') as file:
-            file.write(json.dumps({"results": [settings | metrics]}))
+            file.write(json.dumps({"results": [merged_dict]}))
 
 
 def get_state(context, action):
@@ -90,7 +91,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
         best_strategy_rewards.append(env.get_best_reward_in_context(context).squeeze())
 
         # Metrics
-        if step % 10 == 0 and step != 0:
+        if step % 100 == 0 and step != 0:
             metrics['step'] = step
             t = time.time() - t0
             metrics['time'].append(t)
@@ -154,7 +155,7 @@ def experiment(args):
                                                     repeat=parameters['dim_actions'])]
     if parameters['discrete_contexts']:
         parameters['contexts'] = jnp.linspace(args.min_context, args.max_context, args.n_contexts).tolist()
-    Parallel(n_jobs=cpu_count(), verbose = 10)(delayed(do_single_experiment)(parameters, rd_agent, rd_env) for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env))
+    Parallel(n_jobs=cpu_count(), verbose=100)(delayed(do_single_experiment)(parameters, rd_agent, rd_env) for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env))
 
 
 if __name__ == "__main__":
@@ -174,14 +175,14 @@ if __name__ == "__main__":
                         help='Env Kernel choice')
     parser.add_argument('--kernel_env_param', nargs="?", default=None)
     # Experiment parameters
-    parser.add_argument('--max_horizon', nargs="?", type=int, default=100, help='Maximum horizon')
+    parser.add_argument('--max_horizon', nargs="?", type=int, default=1000, help='Maximum horizon')
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=float, default=101)
+    parser.add_argument('--n_actions', nargs="?", type=float, default=51)
     parser.add_argument('--dim_actions', nargs="?", type=int, default=2)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=float, default=101)
+    parser.add_argument('--n_contexts', nargs="?", type=float, default=51)
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
     parser.add_argument('--discrete_contexts', nargs='?', type=bool, default=True)
     parser.add_argument('--noise_scale', nargs="?", type=float, default=0.1)
