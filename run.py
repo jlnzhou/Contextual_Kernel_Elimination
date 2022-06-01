@@ -30,7 +30,8 @@ def save_result(settings, metrics):
 
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
-    file_name = os.path.join(results_dir, 'metrics.json')
+    file_name = os.path.join(results_dir, 'metrics' + '_' + str(settings['random_seed_agent']) + '_' +
+                             str(settings['random_seed_env']) + '.json')
 
     merged_dict = {**settings, **metrics}
     if os.path.exists(file_name) and os.path.getsize(file_name) > 0:
@@ -80,7 +81,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
     for step in tqdm(range(parameters['T'])):
         # Choose a random context
         context = env.sample_data()
-        states_grid = vmap(lambda x: get_state(context,x))(jnp.array(parameters['actions_grid']))
+        states_grid = vmap(lambda x: get_state(context, x))(jnp.array(parameters['actions_grid']))
         # Iteration of the agent
         action = agent.sample_action(states_grid)
         state = get_state(context, action)
@@ -155,7 +156,25 @@ def experiment(args):
                                                     repeat=parameters['dim_actions'])]
     if parameters['discrete_contexts']:
         parameters['contexts'] = jnp.linspace(args.min_context, args.max_context, args.n_contexts).tolist()
-    Parallel(n_jobs=cpu_count(), verbose=100)(delayed(do_single_experiment)(parameters, rd_agent, rd_env) for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env))
+    Parallel(n_jobs=cpu_count(), verbose=100)(delayed(do_single_experiment)(parameters, rd_agent, rd_env)
+                                              for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env))
+    dict_merge = {"results": []}
+    results_dir = 'results/{}/{}/{}'.format(parameters['env'], parameters['exp_name'], today.strftime("%d-%m-%Y"))
+    for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env):
+        file_name = os.path.join(results_dir, 'metrics' + '_' + str(rd_agent) + '_' + str(rd_env) + '.json')
+        with open(file_name, 'r') as file:
+            dict_merge['results'].append(json.load(file)["results"])
+        os.remove(file_name)
+    file_name = os.path.join(results_dir, 'metrics.json')
+    if os.path.exists(file_name) and os.path.getsize(file_name) > 0:
+        with open(file_name, 'r') as file:
+            current_info = json.load(file)
+            current_info["results"] = current_info["results"] + dict_merge["results"]
+        with open(file_name, 'w') as file:
+            json.dump(current_info, file)
+    else:
+        with open(file_name, 'w') as file:
+            file.write(json.dumps(dict_merge))
 
 
 if __name__ == "__main__":
