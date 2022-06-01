@@ -1,6 +1,7 @@
 from numpy import random
 import jax.numpy as jnp
 from jax.config import config
+from jax import vmap
 
 config.update("jax_enable_x64", True)
 
@@ -19,7 +20,7 @@ class KernelUCBDiscrete:
         self.kernel = kernel
         self.agent_rng = random.RandomState(self.settings['random_seed_agent'])
         # Actions
-        self.actions = settings['actions']
+        self.actions = jnp.array(settings['actions'])
         self.actions_dim = settings['dim_actions']
         self.actions_grid = settings['actions_grid']
         # Contexts
@@ -47,7 +48,7 @@ class KernelUCBDiscrete:
             return self.agent_rng.choice(a=self.actions,
                                          size=self.actions_dim)
         else:
-            ucb_all_actions = jnp.array([self.get_upper_confidence_bound(s) for s in states_grid])
+            ucb_all_actions = vmap(self.get_upper_confidence_bound)(states_grid)
             idx = jnp.argmax(ucb_all_actions)
             state = states_grid[idx]
             context, action = state[:, :self.contexts_dim], state[:, self.contexts_dim:]

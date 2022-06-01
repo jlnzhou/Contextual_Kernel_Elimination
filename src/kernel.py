@@ -38,10 +38,11 @@ def gram(func, params, x, y):
 class Kernel:
 
     def __init__(self,
-                 settings):
+                 settings, type):
         """Initializes the class
         """
         self.settings = settings
+        self.type = type
 
     def gram_matrix(self, states):
         return self._pairwise(states, states)
@@ -56,11 +57,18 @@ class Kernel:
 class Gaussian(Kernel):
 
     def __init__(self,
-                 parameters):
+                 parameters,
+                 type):
         """Initializes the class
         """
-        super(Gaussian, self).__init__(parameters)
-        self.gaussian_scale = parameters['kernel_param']
+        self.gaussian_scale = None
+        super(Gaussian, self).__init__(parameters, type)
+        if self.type == 'env':
+            self.gaussian_scale = parameters["kernel_env_param"]
+        elif self.type == 'agent':
+            self.gaussian_scale = parameters["kernel_agent_param"]
+        else:
+            pass
         if self.gaussian_scale is None:
             self.gaussian_scale = default_gaussian_scale
 
@@ -76,12 +84,18 @@ class Gaussian(Kernel):
 class Exponential(Kernel):
 
     def __init__(self,
-                 parameters):
+                 parameters, type):
         """Initializes the class
         """
-        super(Exponential, self).__init__(parameters)
+        super(Exponential, self).__init__(parameters, type)
         """Initializes the class
         """
+        if self.type == 'env':
+            self.gaussian_scale = parameters["kernel_env_param"]
+        elif self.type == 'agent':
+            self.gaussian_scale = parameters["kernel_agent_param"]
+        else:
+            pass
         self.exp_scale = parameters['kernel_param']
         if self.exp_scale is None:
             self.exp_scale = default_exp_scale

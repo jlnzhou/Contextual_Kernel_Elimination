@@ -2,6 +2,7 @@ import os
 import sys
 from numpy import random
 from jax.config import config
+import jax.numpy as jnp
 
 config.update("jax_enable_x64", True)
 
@@ -16,8 +17,8 @@ class Env:
         # Horizon
         self.horizon = parameters['T']
         # Contexts/Actions parameters
-        self.actions = parameters['actions']
-        self.contexts = parameters['contexts']
+        self.actions = jnp.array(parameters['actions'])
+        self.contexts = jnp.array(parameters['contexts'])
         self.actions_dim = parameters['dim_actions']
         self.contexts_dim = parameters['dim_contexts']
         # RNG parameters
