@@ -135,6 +135,7 @@ def experiment(args):
         'kernel_env': args.kernel_env,
         'kernel_env_param': args.kernel_env_param,
         # Experiment parameters
+        'Parallelization': args.parallelization,
         'T': args.max_horizon,
         'min_action': args.min_action,
         'max_action': args.max_action,
@@ -156,8 +157,12 @@ def experiment(args):
                                                     repeat=parameters['dim_actions'])]
     if parameters['discrete_contexts']:
         parameters['contexts'] = jnp.linspace(args.min_context, args.max_context, args.n_contexts).tolist()
-    Parallel(n_jobs=cpu_count(), verbose=100)(delayed(do_single_experiment)(parameters, rd_agent, rd_env)
-                                              for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env))
+    if parameters['parallelization']:
+        Parallel(n_jobs=cpu_count(), verbose=100)(delayed(do_single_experiment)(parameters, rd_agent, rd_env)
+                                                  for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env))
+    else:
+        for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env):
+            do_single_experiment(parameters, rd_agent, rd_env)
     dict_merge = {"results": []}
     results_dir = 'results/{}/{}/{}'.format(parameters['env'], parameters['exp_name'], today.strftime("%d-%m-%Y"))
     for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env):
@@ -194,7 +199,9 @@ if __name__ == "__main__":
                         help='Env Kernel choice')
     parser.add_argument('--kernel_env_param', nargs="?", default=None)
     # Experiment parameters
+    parser.add_argument('--parallelization', nargs='?', type=bool, default=True)
     parser.add_argument('--max_horizon', nargs="?", type=int, default=1000, help='Maximum horizon')
+    # State space
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
     parser.add_argument('--n_actions', nargs="?", type=float, default=101)
@@ -204,6 +211,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_contexts', nargs="?", type=float, default=101)
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
     parser.add_argument('--discrete_contexts', nargs='?', type=bool, default=True)
+    # Random parameters
     parser.add_argument('--noise_scale', nargs="?", type=float, default=0.1)
     parser.add_argument('--rd_seeds_agent', nargs="+", type=float, default=[0, 1, 2, 3, 4], help='Random seeds Agent')
     parser.add_argument('--rd_seeds_env', nargs="+", type=float, default=[5, 6, 7, 8, 9], help='Random seed Env')
