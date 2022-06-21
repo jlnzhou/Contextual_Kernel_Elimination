@@ -196,16 +196,16 @@ if __name__ == "__main__":
                         help='Env Kernel choice')
     parser.add_argument('--kernel_env_param', nargs="?", default=None)
     # Experiment parameters
-    parser.add_argument('--parallelization', nargs='?', type=bool, default=False)
+    parser.add_argument('--parallelization', nargs='?', type=bool, default=True)
     parser.add_argument('--max_horizon', nargs="?", type=int, default=10000, help='Maximum horizon')
     # State space
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=int, default=101)
+    parser.add_argument('--n_actions', nargs="?", type=int, default=26)
     parser.add_argument('--dim_actions', nargs="?", type=int, default=3)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=int, default=101)
+    parser.add_argument('--n_contexts', nargs="?", type=int, default=26)
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=3)
     parser.add_argument('--discrete_contexts', nargs='?', type=bool, default=True)
     # Random parameters
