@@ -35,5 +35,5 @@ class Env:
     def sample_reward_noisy(self, state):
         pass
 
-    def get_best_reward_in_context(self, context):
+    def get_best_reward_in_context(self, context, states_grid):
         pass

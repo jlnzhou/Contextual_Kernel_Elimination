@@ -5,7 +5,7 @@ from jax.config import config
 from src.agent.kernel_ucb import KernelUCBDiscrete
 from src.kernel import Gaussian, Exponential
 from src.env.env_bump import EnvBumpDiscrete
-#from src.env.env_kernel_linear import EnvKernelLinear
+from src.env.env_kernel_linear import EnvKernelLinearDiscrete
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(base_dir)

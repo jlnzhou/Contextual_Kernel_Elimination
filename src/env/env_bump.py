@@ -37,7 +37,7 @@ class EnvBumpDiscrete(Env):
     def sample_reward_noisy(self, reward):
         return reward + self.env_rng.normal(loc=0.0, scale=self.noise_scale)
 
-    def get_best_reward_in_context(self, context):
+    def get_best_reward_in_context(self, context, states_grid):
         term = jnp.dot(context - self.x_star, self.w_star).squeeze()
         r = max(0, 1 - term)
         return jnp.array([r])
