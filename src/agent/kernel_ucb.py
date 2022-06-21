@@ -1,12 +1,13 @@
-from numpy import random
 import jax.numpy as jnp
 from jax.config import config
 from jax import vmap
 
+from src.agent.agent import Agent
+
 config.update("jax_enable_x64", True)
 
 
-class KernelUCBDiscrete:
+class KernelUCBDiscrete(Agent):
 
     def __init__(self,
                  settings,
@@ -14,22 +15,10 @@ class KernelUCBDiscrete:
         """
         Initializes the class
         """
-        self.settings = settings
+        super(KernelUCBDiscrete, self).__init__(settings)
         self.reg_lambda = settings['reg_lambda']
         self.explo = settings["explo"]
         self.kernel = kernel
-        self.agent_rng = random.RandomState(self.settings['random_seed_agent'])
-        # Actions
-        self.actions = jnp.array(settings['actions'])
-        self.actions_dim = settings['dim_actions']
-        self.actions_grid = settings['actions_grid']
-        # Contexts
-        self.contexts = settings['contexts']
-        self.contexts_dim = settings['dim_contexts']
-        # Other attributes
-        self.past_states = jnp.array([]).reshape(0, self.contexts_dim+self.actions_dim)
-        self.rewards_clean = jnp.array([]).reshape(0)
-        self.rewards = jnp.array([]).reshape(0)
         self.matrix_kt = None
         self.matrix_kt_inverse = None
 
@@ -58,11 +47,6 @@ class KernelUCBDiscrete:
         return self.discrete_inference(context)
 
     # Updating agent
-    def update_data_pool(self, state, reward_clean, reward):
-        self.past_states = jnp.concatenate([self.past_states, state])
-        self.rewards_clean = jnp.concatenate([self.rewards_clean, reward_clean])
-        self.rewards = jnp.concatenate([self.rewards, reward])
-
     def update_agent(self, state, reward_clean, reward):
         self.update_data_pool(state, reward_clean, reward)
         k_present_present = self.kernel.evaluate(state, state)

@@ -3,6 +3,7 @@ import sys
 from jax.config import config
 
 from src.agent.kernel_ucb import KernelUCBDiscrete
+from src.agent.agent_random import AgentRandomDiscrete
 from src.kernel import Gaussian, Exponential
 from src.env.env_bump import EnvBumpDiscrete
 from src.env.env_kernel_linear import EnvKernelLinearDiscrete
@@ -21,18 +22,16 @@ def get_env_by_name(parameters, kernel):
         raise NotImplementedError
 
 
-def get_kernel_by_name(parameters, type):
-    kernel = None
-    if type == 'agent':
-        kernel = parameters["kernel_agent"]
-    elif type == 'env':
+def get_kernel_by_name(parameters, agent_env):
+    kernel = parameters["kernel_agent"]
+    if agent_env == 'env':
         kernel = parameters['kernel_env']
-    else:
+    elif agent_env != 'agent':
         raise NotImplementedError
     if kernel == 'gauss':
-        return Gaussian(parameters, type)
+        return Gaussian(parameters, agent_env)
     elif parameters['kernel'] == 'exp':
-        return Exponential(parameters, type)
+        return Exponential(parameters, agent_env)
     else:
         raise NotImplementedError
 
@@ -40,5 +39,7 @@ def get_kernel_by_name(parameters, type):
 def get_agent_by_name(parameters):
     if parameters['agent'] == 'k_ucb' and parameters['discrete_contexts']:
         return KernelUCBDiscrete
+    elif parameters['agent'] == 'random' and parameters['discrete_contexts']:
+        return AgentRandomDiscrete
     else:
         raise NotImplementedError

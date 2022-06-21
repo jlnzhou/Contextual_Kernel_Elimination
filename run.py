@@ -88,7 +88,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
         best_strategy_rewards.append(env.get_best_reward_in_context(context, states_grid).squeeze())
 
         # Metrics
-        if step % 10 == 0 and step != 0:
+        if step % 100 == 0 and step != 0:
             metrics['step'] = step
             t = time.time() - t0
             metrics['time'].append(t)
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Run scripts for the evaluation of methods')
     # Algorithm
-    parser.add_argument('--algo', nargs="?", default='k_ucb', choices=['k_ucb'], help='Algorithm')
+    parser.add_argument('--algo', nargs="?", default='k_ucb', choices=['k_ucb', 'random'], help='Algorithm')
     parser.add_argument('--kernel_agent', nargs="?", default='gauss', choices=['gauss', 'exp'],
                         help='Agent Kernel choice')
     parser.add_argument('--kernel_agent_param', nargs="?", default=None)
@@ -190,25 +190,26 @@ if __name__ == "__main__":
     parser.add_argument('--explo', nargs='?', type=float, default=1, help='Exploration parameter')
     parser.add_argument('--mu', nargs="?", type=float, default=1, help='Projection parameter')
     # Environment
-    parser.add_argument('--env', nargs="?", default='kernel_linear', choices=['bump', 'kernel_linear'], help='Environment')
+    parser.add_argument('--env', nargs="?", default='kernel_linear', choices=['bump', 'kernel_linear'],
+                        help='Environment')
     parser.add_argument('--kernel_env', nargs="?", default='gauss', choices=['gauss', 'exp'],
                         help='Env Kernel choice')
     parser.add_argument('--kernel_env_param', nargs="?", default=None)
     # Experiment parameters
     parser.add_argument('--parallelization', nargs='?', type=bool, default=False)
-    parser.add_argument('--max_horizon', nargs="?", type=int, default=100, help='Maximum horizon')
+    parser.add_argument('--max_horizon', nargs="?", type=int, default=10000, help='Maximum horizon')
     # State space
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=float, default=11)
-    parser.add_argument('--dim_actions', nargs="?", type=int, default=2)
+    parser.add_argument('--n_actions', nargs="?", type=int, default=101)
+    parser.add_argument('--dim_actions', nargs="?", type=int, default=3)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=float, default=11)
-    parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
+    parser.add_argument('--n_contexts', nargs="?", type=int, default=101)
+    parser.add_argument('--dim_contexts', nargs="?", type=int, default=3)
     parser.add_argument('--discrete_contexts', nargs='?', type=bool, default=True)
     # Random parameters
-    parser.add_argument('--noise_scale', nargs="?", type=float, default=0.0001)
+    parser.add_argument('--noise_scale', nargs="?", type=float, default=1)
     parser.add_argument('--rd_seeds_agent', nargs="+", type=float, default=[0, 1, 2, 3, 4], help='Random seeds Agent')
     parser.add_argument('--rd_seeds_env', nargs="+", type=float, default=[5, 6, 7, 8, 9], help='Random seed Env')
     parser.add_argument('--exp_name', nargs="?", type=str, default='exp', help='Name of the experiment')
