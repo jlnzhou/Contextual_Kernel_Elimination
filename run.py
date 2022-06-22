@@ -170,13 +170,13 @@ def experiment(args):
     dict_merge = {"results": []}
     results_dir = 'results/{}'.format(parameters['exp_name'])
     for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env):
-        file_name = os.path.join(results_dir, 'metrics' + '_' + rd_agent + '_' +
-                                 rd_env + '_' + parameters['exp_name'] +
+        file_name = os.path.join(results_dir, 'metrics' + '_' + str(rd_agent) + '_' +
+                                 str(rd_env) + '_' + parameters['exp_name'] +
                                  '.json')
         with open(file_name, 'r') as file:
             dict_merge['results'].append(json.load(file)["results"])
         os.remove(file_name)
-    file_name = os.path.join(results_dir, 'metrics'+ '_' + parameters['exp_name'] + '_'
+    file_name = os.path.join(results_dir, 'metrics' + '_' + parameters['exp_name'] + '_'
                              + today.strftime("%d-%m-%Y") + '.json')
     if os.path.exists(file_name) and os.path.getsize(file_name) > 0:
         with open(file_name, 'r') as file:
