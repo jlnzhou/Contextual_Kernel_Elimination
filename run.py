@@ -27,23 +27,17 @@ sys.path.append(base_dir)
 
 
 def save_result(settings, metrics):
-    results_dir = 'results/{}/{}/{}'.format(settings['env'], settings['exp_name'], today.strftime("%d-%m-%Y"))
+    # results_dir = 'results/{}/{}/{}'.format(settings['env'], settings['exp_name'], today.strftime("%d-%m-%Y"))
+    results_dir = 'results/{}'.format(settings['exp_name'])
 
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
     file_name = os.path.join(results_dir, 'metrics' + '_' + str(settings['random_seed_agent']) + '_' +
-                             str(settings['random_seed_env']) + '.json')
-
+                             str(settings['random_seed_env']) + '_' + settings['exp_name'] +
+                             '.json')
     merged_dict = {**settings, **metrics}
-    if os.path.exists(file_name) and os.path.getsize(file_name) > 0:
-        with open(file_name, 'r') as file:
-            current_info = json.load(file)
-            current_info["results"].append(merged_dict)
-        with open(file_name, 'w') as file:
-            json.dump(current_info, file)
-    else:
-        with open(file_name, 'w') as file:
-            file.write(json.dumps({"results": [merged_dict]}))
+    with open(file_name, 'w') as file:
+        file.write(json.dumps({"results": merged_dict}))
 
 
 def do_single_experiment(parameters, rd_agent, rd_env):
@@ -68,6 +62,16 @@ def do_single_experiment(parameters, rd_agent, rd_env):
                'regret': [],
                'regret_clean': []
                }
+    save_parameters = {k: parameters[k] for k in ['agent',  'kernel_agent', 'kernel_agent_param', 'reg_lambda',
+                                                  'explo', 'mu',
+                                                  'env', 'kernel_env', 'kernel_env_param',
+                                                  'parallelization', 'T',
+                                                  'min_action', 'max_action', 'n_actions', 'dim_actions',
+                                                  'min_context', 'max_context', 'n_contexts', 'dim_contexts',
+                                                  'discrete_contexts',
+                                                  'noise_scale',
+                                                  'exp_name',
+                                                  'random_seed_agent', 'random_seed_env']}
     best_strategy_rewards = []
 
     # t0
@@ -118,6 +122,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
 
 
 def experiment(args):
+    # Setup parameters
     parameters = {
         # Algorithm
         'agent': args.algo,
@@ -153,20 +158,26 @@ def experiment(args):
                                                     repeat=parameters['dim_actions'])]
     if parameters['discrete_contexts']:
         parameters['contexts'] = jnp.linspace(args.min_context, args.max_context, args.n_contexts).tolist()
+    # Parallelization
     if parameters['parallelization']:
         Parallel(n_jobs=cpu_count(), verbose=100)(delayed(do_single_experiment)(parameters, rd_agent, rd_env)
                                                   for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env))
+    # Unique CPU
     else:
         for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env):
             do_single_experiment(parameters, rd_agent, rd_env)
+    # Merge history
     dict_merge = {"results": []}
-    results_dir = 'results/{}/{}/{}'.format(parameters['env'], parameters['exp_name'], today.strftime("%d-%m-%Y"))
+    results_dir = 'results/{}'.format(parameters['exp_name'])
     for (rd_agent, rd_env) in zip(args.rd_seeds_agent, args.rd_seeds_env):
-        file_name = os.path.join(results_dir, 'metrics' + '_' + str(rd_agent) + '_' + str(rd_env) + '.json')
+        file_name = os.path.join(results_dir, 'metrics' + '_' + rd_agent + '_' +
+                                 rd_env + '_' + parameters['exp_name'] +
+                                 '.json')
         with open(file_name, 'r') as file:
             dict_merge['results'].append(json.load(file)["results"])
         os.remove(file_name)
-    file_name = os.path.join(results_dir, 'metrics.json')
+    file_name = os.path.join(results_dir, 'metrics'+ '_' + parameters['exp_name'] + '_'
+                             + today.strftime("%d-%m-%Y") + '.json')
     if os.path.exists(file_name) and os.path.getsize(file_name) > 0:
         with open(file_name, 'r') as file:
             current_info = json.load(file)
@@ -212,5 +223,5 @@ if __name__ == "__main__":
     parser.add_argument('--noise_scale', nargs="?", type=float, default=1)
     parser.add_argument('--rd_seeds_agent', nargs="+", type=float, default=[0, 1, 2, 3, 4], help='Random seeds Agent')
     parser.add_argument('--rd_seeds_env', nargs="+", type=float, default=[5, 6, 7, 8, 9], help='Random seed Env')
-    parser.add_argument('--exp_name', nargs="?", type=str, default='exp', help='Name of the experiment')
+    parser.add_argument('--exp_name', nargs="?", type=str, default='default_exp', help='Name of the experiment')
     experiment(parser.parse_args())
