@@ -109,7 +109,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
             sum_best = jnp.sum(jnp.array(best_strategy_rewards)).item()
             metrics['sum_best'].append(sum_best)
             regret = sum_best - sum_agent
-            regret_clean = sum_best - sum_agent_clean
+            regret_noiseless = sum_best - sum_agent_clean
             metrics['regret'].append(regret)
             metrics['regret_noiseless'].append(regret_noiseless)
             print("Random seed Agent: {}".format(rd_agent))
