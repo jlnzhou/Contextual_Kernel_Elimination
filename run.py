@@ -210,11 +210,11 @@ if __name__ == "__main__":
     # State space
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=int, default=50)
+    parser.add_argument('--n_actions', nargs="?", type=int, default=10)
     parser.add_argument('--dim_actions', nargs="?", type=int, default=5)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=int, default=50)
+    parser.add_argument('--n_contexts', nargs="?", type=int, default=10)
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
     parser.add_argument('--discrete_contexts', nargs='?', type=bool, default=True)
     # Random parameters
