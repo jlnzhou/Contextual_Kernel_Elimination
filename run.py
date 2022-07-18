@@ -93,7 +93,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
 
         # Metrics
         if step % 100 == 0 and step != 0:
-            metrics['step'] = step
+            metrics['step'].append(step)
             t = time.time() - t0
             metrics['time'].append(t)
             average_reward = jnp.mean(jnp.array(agent.rewards)).item()
