@@ -198,7 +198,6 @@ if __name__ == "__main__":
                         help='Agent Kernel choice')
     parser.add_argument('--kernel_agent_param', nargs="?", default=None)
     parser.add_argument('--lbd', nargs="?", type=float, default=1, help='Regularization parameter')
-    parser.add_argument('--explo', nargs='?', type=float, default=1, help='Exploration parameter')
     parser.add_argument('--mu', nargs="?", type=float, default=1, help='Projection parameter')
     # Environment
     parser.add_argument('--env', nargs="?", default='kernel_linear', choices=['bump', 'kernel_linear'],
@@ -212,11 +211,11 @@ if __name__ == "__main__":
     # State space
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=int, default=26)
+    parser.add_argument('--n_actions', nargs="?", type=int, default=25)
     parser.add_argument('--dim_actions', nargs="?", type=int, default=3)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=int, default=26)
+    parser.add_argument('--n_contexts', nargs="?", type=int, default=25)
     parser.add_argument('--dim_contexts', nargs="?", type=int, default=3)
     parser.add_argument('--discrete_contexts', nargs='?', type=bool, default=True)
     # Random parameters
