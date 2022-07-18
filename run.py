@@ -111,7 +111,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
             regret = sum_best - sum_agent
             regret_clean = sum_best - sum_agent_clean
             metrics['regret'].append(regret)
-            metrics['regret_clean'].append(regret_clean)
+            metrics['regret_noiseless'].append(regret_noiseless)
             print("Random seed Agent: {}".format(rd_agent))
             print("Random seed Env: {}".format(rd_env))
             print('Step: {}'.format(step))
@@ -210,12 +210,12 @@ if __name__ == "__main__":
     # State space
     parser.add_argument('--min_action', nargs="?", type=float, default=0)
     parser.add_argument('--max_action', nargs="?", type=float, default=1)
-    parser.add_argument('--n_actions', nargs="?", type=int, default=25)
-    parser.add_argument('--dim_actions', nargs="?", type=int, default=3)
+    parser.add_argument('--n_actions', nargs="?", type=int, default=50)
+    parser.add_argument('--dim_actions', nargs="?", type=int, default=5)
     parser.add_argument('--min_context', nargs="?", type=float, default=0)
     parser.add_argument('--max_context', nargs="?", type=float, default=1)
-    parser.add_argument('--n_contexts', nargs="?", type=int, default=25)
-    parser.add_argument('--dim_contexts', nargs="?", type=int, default=3)
+    parser.add_argument('--n_contexts', nargs="?", type=int, default=50)
+    parser.add_argument('--dim_contexts', nargs="?", type=int, default=5)
     parser.add_argument('--discrete_contexts', nargs='?', type=bool, default=True)
     # Random parameters
     parser.add_argument('--noise_scale', nargs="?", type=float, default=1)
