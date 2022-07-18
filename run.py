@@ -117,7 +117,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
             print('Step: {}'.format(step))
             print('Average reward: {}'.format(average_reward))
             print('Regret: {}'.format(regret))
-            print('Regret clean: {}'.format(regret_clean))
+            print('Regret Noiseless: {}'.format(regret_noiseless))
             save_result(save_parameters, metrics)
 
 
