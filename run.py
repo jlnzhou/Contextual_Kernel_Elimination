@@ -46,6 +46,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
     print('Running single experiment')
     print("Random seed Agent: {}".format(rd_agent))
     print("Random seed Env: {}".format(rd_env))
+
     # Instantiation
     kernel_env = get_kernel_by_name(parameters, 'env')
     env = get_env_by_name(parameters, kernel_env)
@@ -60,10 +61,9 @@ def do_single_experiment(parameters, rd_agent, rd_env):
                'sum_reward_clean': [],
                'sum_best': [],
                'regret': [],
-               'regret_clean': []
+               'regret_noiseless': []
                }
-    save_parameters = {k: parameters[k] for k in ['agent',  'kernel_agent', 'kernel_agent_param', 'reg_lambda',
-                                                  'explo', 'mu',
+    save_parameters = {k: parameters[k] for k in ['agent',  'kernel_agent', 'kernel_agent_param', 'reg_lambda', 'mu',
                                                   'env', 'kernel_env', 'kernel_env_param',
                                                   'parallelization', 'T',
                                                   'min_action', 'max_action', 'n_actions', 'dim_actions',
@@ -118,7 +118,7 @@ def do_single_experiment(parameters, rd_agent, rd_env):
             print('Average reward: {}'.format(average_reward))
             print('Regret: {}'.format(regret))
             print('Regret clean: {}'.format(regret_clean))
-            save_result(parameters, metrics)
+            save_result(save_parameters, metrics)
 
 
 def experiment(args):
@@ -129,7 +129,6 @@ def experiment(args):
         'kernel_agent': args.kernel_agent,
         'kernel_agent_param': args.kernel_agent_param,
         'reg_lambda': args.lbd,
-        'explo': args.explo,
         'mu': args.mu,
         # Environment
         'env': args.env,
